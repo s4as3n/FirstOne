@@ -209,7 +209,8 @@
                 gameOver = true;
                 won = true;
             } else if (wrongGuesses.length >= 6) {
-                document.getElementById('message').textContent = `😢 Game Over! Word was: ${word}`;
+                document.getElementById('message').textContent = '😢 Game Over!';
+                document.getElementById('word-display').textContent = word.split('').join(' ');
                 gameOver = true;
             }
         }
@@ -222,7 +223,7 @@
                 const btn = document.createElement('button');
                 btn.textContent = letter;
                 btn.className = 'letter-btn';
-                btn.disabled = guessedLetters.includes(letter);
+                btn.disabled = guessedLetters.includes(letter) || gameOver;
                 btn.onclick = () => {
                     guessLetter(letter);
                     updateKeyboard();
