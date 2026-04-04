@@ -233,8 +233,8 @@
         function startGame() {
             player1Name = document.getElementById('player1Input').value || 'Player 1';
             player2Name = document.getElementById('player2Input').value || 'Player 2';
-            player1Label.textContent = player1Name + ' Wins';
-            player2Label.textContent = player2Name + ' Wins';
+            player1Label.textContent = player1Name + ' (X) Wins';
+            player2Label.textContent = player2Name + ' (O) Wins';
             setup.style.display = 'none';
             game.style.display = 'block';
             cells.forEach(cell => cell.addEventListener('click', handleClick));
