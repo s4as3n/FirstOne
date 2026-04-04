@@ -114,6 +114,38 @@
         #nextRoundBtn:hover {
             background: #764ba2;
         }
+        .popup {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: #fff;
+            padding: 25px 40px;
+            border-radius: 12px;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.25);
+            font-size: 22px;
+            text-align: center;
+            z-index: 1000;
+            display: none;
+        }
+        .match-popup {
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+        }
+        .match-popup button {
+            margin-top: 20px;
+            padding: 10px 18px;
+            background: #fff;
+            color: #ff6b6b;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .match-popup button:hover {
+            background: #f0f0f0;
+        }
         .back-link {
             margin-top: 20px;
         }
@@ -135,10 +167,25 @@
             <input type="text" id="player1Input" placeholder="Player 1 Name" value="Player 1">
             <input type="text" id="player2Input" placeholder="Player 2 Name" value="Player 2">
             <br>
+            <input type="number" id="roundsInput" placeholder="Rounds" min="1" value="3" style="width:100px; margin-top:10px;">
+            <div style="margin-top:15px;">
+                <label>Player 1 chooses:</label>
+                <select id="player1Choice">
+                    <option value="heads">Heads</option>
+                    <option value="tails">Tails</option>
+                </select>
+            </div>
+            <div style="margin-top:10px;">
+                <label>Player 2 chooses:</label>
+                <select id="player2Choice">
+                    <option value="tails">Tails</option>
+                    <option value="heads">Heads</option>
+                </select>
+            </div>
             <button id="startMatchBtn">Start Match</button>
         </div>
         <div id="wordInput" style="display:none; margin-top: 20px;">
-            <div id="setterInfo"></div>
+            <div id="setterInfo" style="font-weight:bold; margin-bottom:10px;"></div>
             <input type="password" id="setterWordInput" maxlength="5" placeholder="Enter 5-letter word">
             <button id="submitWordBtn">Submit Word</button>
         </div>
@@ -169,6 +216,7 @@
             </div>
             <div class="game-info">
                 <div id="roleDisplay"></div>
+                <div id="scoreboard" style="margin-bottom:10px; font-weight:bold;"></div>
                 <div id="word-display"></div>
                 <div id="message"></div>
                 <div id="guesses"><strong>Wrong Guesses:</strong> <span id="wrong-letters"></span></div>
@@ -179,12 +227,21 @@
                 </div>
             </div>
         </div>
+        <div id="roundPopup" class="popup"></div>
+        <div id="matchPopup" class="popup match-popup">
+            <div id="matchPopupText"></div>
+            <button id="newMatchBtn">Start New Match</button>
+        </div>
     </div>
 
     <script>
         const hangmanParts = ['head', 'body', 'left-arm', 'right-arm', 'left-leg', 'right-leg'];
         let player1Name = 'Player 1';
         let player2Name = 'Player 2';
+        let totalRounds = 1;
+        let currentRound = 1;
+        let wins1 = 0;
+        let wins2 = 0;
         let currentSetter = 1;
         let currentGuesser = 2;
         let word = '';
@@ -195,40 +252,64 @@
         const startMatchBtn = document.getElementById('startMatchBtn');
         const submitWordBtn = document.getElementById('submitWordBtn');
         const nextRoundBtn = document.getElementById('nextRoundBtn');
+        const newMatchBtn = document.getElementById('newMatchBtn');
         const setup = document.getElementById('setup');
         const wordInput = document.getElementById('wordInput');
         const gameArea = document.getElementById('gameArea');
         const setterInfo = document.getElementById('setterInfo');
         const roleDisplay = document.getElementById('roleDisplay');
+        const scoreboard = document.getElementById('scoreboard');
         const wordDisplay = document.getElementById('word-display');
         const messageDisplay = document.getElementById('message');
         const wrongLettersDisplay = document.getElementById('wrong-letters');
         const keyboard = document.getElementById('keyboard');
         const setterWordInput = document.getElementById('setterWordInput');
-        const cells = document.querySelectorAll('.letter-btn');
+        const roundPopup = document.getElementById('roundPopup');
+        const matchPopup = document.getElementById('matchPopup');
+        const matchPopupText = document.getElementById('matchPopupText');
 
         startMatchBtn.addEventListener('click', startMatch);
         submitWordBtn.addEventListener('click', submitWord);
         nextRoundBtn.addEventListener('click', startNextRound);
+        newMatchBtn.addEventListener('click', startNewMatch);
 
         function startMatch() {
+            const p1Choice = document.getElementById('player1Choice').value;
+            const p2Choice = document.getElementById('player2Choice').value;
+            if (p1Choice === p2Choice) {
+                messageDisplay.textContent = 'Players must choose opposite coin sides.';
+                return;
+            }
             player1Name = document.getElementById('player1Input').value.trim() || 'Player 1';
             player2Name = document.getElementById('player2Input').value.trim() || 'Player 2';
-            currentSetter = 1;
-            currentGuesser = 2;
+            totalRounds = parseInt(document.getElementById('roundsInput').value, 10) || 1;
+            if (totalRounds < 1) {
+                messageDisplay.textContent = 'Enter at least 1 round.';
+                return;
+            }
+            const toss = Math.random() < 0.5 ? 'heads' : 'tails';
+            const setterWins = p1Choice === toss;
+            currentSetter = setterWins ? 1 : 2;
+            currentGuesser = currentSetter === 1 ? 2 : 1;
+            wins1 = 0;
+            wins2 = 0;
+            currentRound = 1;
             setup.style.display = 'none';
             wordInput.style.display = 'block';
             gameArea.style.display = 'none';
+            roundPopup.style.display = 'none';
+            matchPopup.style.display = 'none';
             setterWordInput.value = '';
             updateSetterInfo();
-            messageDisplay.textContent = 'Enter a secret 5-letter word for the other player to guess.';
+            updateScoreboard();
+            messageDisplay.textContent = `${player1Name} chose ${p1Choice}, ${player2Name} chose ${p2Choice}. Coin toss is ${toss}. ${currentSetter === 1 ? player1Name : player2Name} sets first.`;
         }
 
         function updateSetterInfo() {
             const setterName = currentSetter === 1 ? player1Name : player2Name;
             const guesserName = currentGuesser === 1 ? player1Name : player2Name;
-            setterInfo.textContent = `${setterName}, enter a 5-letter word for ${guesserName} to guess.`;
-            roleDisplay.textContent = `${guesserName} is guessing. ${setterName} is setting the word.`;
+            setterInfo.textContent = `Round ${currentRound} of ${totalRounds}: ${setterName} sets the word for ${guesserName}.`;
+            roleDisplay.textContent = `${guesserName} is guessing now.`;
         }
 
         function submitWord() {
@@ -251,6 +332,7 @@
             updateKeyboard();
             updateHangman();
             updateWrongGuesses();
+            updateScoreboard();
             messageDisplay.textContent = `${currentGuesser === 1 ? player1Name : player2Name} is guessing now.`;
             nextRoundBtn.style.display = 'none';
         }
@@ -260,6 +342,10 @@
                 guessedLetters.includes(letter) ? letter : '_'
             ).join(' ');
             wordDisplay.textContent = display;
+        }
+
+        function updateScoreboard() {
+            scoreboard.textContent = `${player1Name}: ${wins1}   |   ${player2Name}: ${wins2}`;
         }
 
         function guessLetter(letter) {
@@ -288,16 +374,49 @@
         function checkGameStatus() {
             const isWon = word.split('').every(letter => guessedLetters.includes(letter));
             if (isWon) {
-                messageDisplay.textContent = `🎉 ${currentGuesser === 1 ? player1Name : player2Name} wins!`;
+                const winnerName = currentGuesser === 1 ? player1Name : player2Name;
+                const roundMessage = `${winnerName} wins this round!`;
+                showRoundPopup(roundMessage);
+                if (currentGuesser === 1) {
+                    wins1++;
+                } else {
+                    wins2++;
+                }
+                updateScoreboard();
                 gameOver = true;
-                nextRoundBtn.style.display = 'inline-block';
+                if (currentRound < totalRounds) {
+                    nextRoundBtn.style.display = 'inline-block';
+                } else {
+                    showMatchPopup();
+                }
             } else if (wrongGuesses.length >= 6) {
+                const winnerName = currentSetter === 1 ? player1Name : player2Name;
+                const roundMessage = `${winnerName} wins this round!`;
+                showRoundPopup(roundMessage);
                 messageDisplay.textContent = `😢 Game Over! The word was ${word.toUpperCase()}`;
                 wordDisplay.textContent = word.split('').join(' ');
+                if (currentSetter === 1) {
+                    wins1++;
+                } else {
+                    wins2++;
+                }
+                updateScoreboard();
                 gameOver = true;
-                nextRoundBtn.style.display = 'inline-block';
+                if (currentRound < totalRounds) {
+                    nextRoundBtn.style.display = 'inline-block';
+                } else {
+                    showMatchPopup();
+                }
             }
             updateKeyboard();
+        }
+
+        function showRoundPopup(text) {
+            roundPopup.textContent = text;
+            roundPopup.style.display = 'block';
+            setTimeout(() => {
+                roundPopup.style.display = 'none';
+            }, 1500);
         }
 
         function updateKeyboard() {
@@ -316,13 +435,37 @@
         }
 
         function startNextRound() {
+            currentRound++;
             currentSetter = currentSetter === 1 ? 2 : 1;
-            currentGuesser = currentGuesser === 1 ? 2 : 1;
+            currentGuesser = currentSetter === 1 ? 2 : 1;
             wordInput.style.display = 'block';
             gameArea.style.display = 'none';
             setterWordInput.value = '';
+            nextRoundBtn.style.display = 'none';
             updateSetterInfo();
             messageDisplay.textContent = `${currentSetter === 1 ? player1Name : player2Name} should enter a new 5-letter word.`;
+        }
+
+        function showMatchPopup() {
+            const winnerText = wins1 > wins2 ? `${player1Name} wins the match!` : wins2 > wins1 ? `${player2Name} wins the match!` : 'The match is a tie!';
+            matchPopupText.textContent = `${winnerText}\n${player1Name}: ${wins1} | ${player2Name}: ${wins2}`;
+            matchPopup.style.display = 'block';
+        }
+
+        function startNewMatch() {
+            setup.style.display = 'block';
+            wordInput.style.display = 'none';
+            gameArea.style.display = 'none';
+            matchPopup.style.display = 'none';
+            setterWordInput.value = '';
+            messageDisplay.textContent = '';
+            wrongLettersDisplay.textContent = '';
+            wordDisplay.textContent = '';
+            roleDisplay.textContent = '';
+            currentRound = 1;
+            wins1 = 0;
+            wins2 = 0;
+            updateScoreboard();
         }
     </script>
 </body>
