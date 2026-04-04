@@ -88,34 +88,69 @@
         .back-link a:hover {
             text-decoration: underline;
         }
+        .setup {
+            margin-bottom: 30px;
+        }
+        .setup input {
+            padding: 8px;
+            margin: 5px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        .setup button {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        .setup button:hover {
+            background: #764ba2;
+        }
+        #game {
+            display: none;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>Tic Tac Toe</h1>
-        <div class="scores">
-            <div>
-                <div>X Wins</div>
-                <div id="winCounterX">0</div>
-            </div>
-            <div>
-                <div>O Wins</div>
-                <div id="winCounterO">0</div>
-            </div>
+        <div id="setup" class="setup">
+            <h2>Enter Player Names</h2>
+            <input type="text" id="player1Input" placeholder="Player 1 Name" value="Player 1">
+            <input type="text" id="player2Input" placeholder="Player 2 Name" value="Player 2">
+            <br>
+            <button id="startGameBtn">Start Game</button>
         </div>
-        <div id="board">
-            <div class="cell" data-index="0"></div>
-            <div class="cell" data-index="1"></div>
-            <div class="cell" data-index="2"></div>
-            <div class="cell" data-index="3"></div>
-            <div class="cell" data-index="4"></div>
-            <div class="cell" data-index="5"></div>
-            <div class="cell" data-index="6"></div>
-            <div class="cell" data-index="7"></div>
-            <div class="cell" data-index="8"></div>
-        </div>
-        <div class="buttons">
-            <button id="reset">New Game</button>
+        <div id="game">
+            <div class="scores">
+                <div>
+                    <div id="player1Label">Player 1 Wins</div>
+                    <div id="winCounterX">0</div>
+                </div>
+                <div>
+                    <div id="player2Label">Player 2 Wins</div>
+                    <div id="winCounterO">0</div>
+                </div>
+            </div>
+            <div id="board">
+                <div class="cell" data-index="0"></div>
+                <div class="cell" data-index="1"></div>
+                <div class="cell" data-index="2"></div>
+                <div class="cell" data-index="3"></div>
+                <div class="cell" data-index="4"></div>
+                <div class="cell" data-index="5"></div>
+                <div class="cell" data-index="6"></div>
+                <div class="cell" data-index="7"></div>
+                <div class="cell" data-index="8"></div>
+            </div>
+            <div class="buttons">
+                <button id="reset">New Game</button>
+            </div>
         </div>
         <div class="back-link">
             <a href="index.html">← Back to Home</a>
@@ -123,6 +158,8 @@
     </div>
 
     <script>
+        let player1Name = 'Player 1';
+        let player2Name = 'Player 2';
         const board = Array(9).fill(null);
         let currentPlayer = 'X';
         let winsX = 0;
@@ -130,16 +167,31 @@
         const cells = document.querySelectorAll('.cell');
         const winCounterX = document.getElementById('winCounterX');
         const winCounterO = document.getElementById('winCounterO');
+        const player1Label = document.getElementById('player1Label');
+        const player2Label = document.getElementById('player2Label');
         const resetButton = document.getElementById('reset');
+        const startGameBtn = document.getElementById('startGameBtn');
+        const setup = document.getElementById('setup');
+        const game = document.getElementById('game');
 
-        cells.forEach(cell => cell.addEventListener('click', handleClick));
+        startGameBtn.addEventListener('click', startGame);
         resetButton.addEventListener('click', resetGame);
+
+        function startGame() {
+            player1Name = document.getElementById('player1Input').value || 'Player 1';
+            player2Name = document.getElementById('player2Input').value || 'Player 2';
+            player1Label.textContent = player1Name + ' Wins';
+            player2Label.textContent = player2Name + ' Wins';
+            setup.style.display = 'none';
+            game.style.display = 'block';
+            cells.forEach(cell => cell.addEventListener('click', handleClick));
+        }
 
         function handleClick(e) {
             const index = parseInt(e.target.dataset.index);
             if (board[index] || checkWinner(board, currentPlayer)) return;
             board[index] = currentPlayer;
-            e.target.textContent = currentPlayer;
+            e.target.textContent = currentPlayer === 'X' ? player1Name : player2Name;
             if (checkWinner(board, currentPlayer)) {
                 if (currentPlayer === 'X') {
                     winsX++;
@@ -148,7 +200,7 @@
                     winsO++;
                     winCounterO.textContent = winsO;
                 }
-                alert(`${currentPlayer} wins!`);
+                alert(`${currentPlayer === 'X' ? player1Name : player2Name} wins!`);
             } else if (board.every(cell => cell)) {
                 alert('Draw!');
             } else {
