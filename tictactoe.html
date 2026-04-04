@@ -114,6 +114,21 @@
         #game {
             display: none;
         }
+        .win-message {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 24px;
+            font-weight: bold;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 1000;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -155,6 +170,7 @@
         <div class="back-link">
             <a href="index.html">← Back to Home</a>
         </div>
+        <div id="winMessage" class="win-message"></div>
     </div>
 
     <script>
@@ -173,6 +189,7 @@
         const startGameBtn = document.getElementById('startGameBtn');
         const setup = document.getElementById('setup');
         const game = document.getElementById('game');
+        const winMessage = document.getElementById('winMessage');
 
         startGameBtn.addEventListener('click', startGame);
         resetButton.addEventListener('click', resetGame);
@@ -200,9 +217,13 @@
                     winsO++;
                     winCounterO.textContent = winsO;
                 }
-                alert(`${currentPlayer === 'X' ? player1Name : player2Name} wins!`);
+                winMessage.textContent = `${currentPlayer === 'X' ? player1Name : player2Name} wins!`;
+                winMessage.style.display = 'block';
+                setTimeout(() => winMessage.style.display = 'none', 1500);
             } else if (board.every(cell => cell)) {
-                alert('Draw!');
+                winMessage.textContent = 'Draw!';
+                winMessage.style.display = 'block';
+                setTimeout(() => winMessage.style.display = 'none', 1500);
             } else {
                 currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
             }
