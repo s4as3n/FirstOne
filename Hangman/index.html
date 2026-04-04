@@ -88,6 +88,32 @@
         #reset-btn:hover {
             background: #5a3a7a;
         }
+        #setup input,
+        #wordInput input {
+            padding: 10px;
+            margin: 8px 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            width: 160px;
+        }
+        #setup button,
+        #wordInput button,
+        #nextRoundBtn {
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 10px;
+        }
+        #setup button:hover,
+        #wordInput button:hover,
+        #nextRoundBtn:hover {
+            background: #764ba2;
+        }
         .back-link {
             margin-top: 20px;
         }
@@ -104,7 +130,19 @@
 <body>
     <div class="container">
         <h1>Hangman Game</h1>
-        <div class="game-content">
+        <div id="setup">
+            <h2>Two-player Hangman</h2>
+            <input type="text" id="player1Input" placeholder="Player 1 Name" value="Player 1">
+            <input type="text" id="player2Input" placeholder="Player 2 Name" value="Player 2">
+            <br>
+            <button id="startMatchBtn">Start Match</button>
+        </div>
+        <div id="wordInput" style="display:none; margin-top: 20px;">
+            <div id="setterInfo"></div>
+            <input type="password" id="setterWordInput" maxlength="5" placeholder="Enter 5-letter word">
+            <button id="submitWordBtn">Submit Word</button>
+        </div>
+        <div id="gameArea" class="game-content" style="display:none;">
             <div class="hangman-drawing">
                 <svg id="hangman-svg" viewBox="0 0 200 250">
                     <!-- Base -->
@@ -130,11 +168,12 @@
                 </svg>
             </div>
             <div class="game-info">
+                <div id="roleDisplay"></div>
                 <div id="word-display"></div>
                 <div id="message"></div>
                 <div id="guesses"><strong>Wrong Guesses:</strong> <span id="wrong-letters"></span></div>
                 <div id="keyboard"></div>
-                <button id="reset-btn">New Game</button>
+                <button id="nextRoundBtn" style="display:none;">Next Round</button>
                 <div class="back-link">
                     <a href="../index.html">← Back to Home</a>
                 </div>
@@ -143,81 +182,125 @@
     </div>
 
     <script>
-        const words = ['apple', 'beach', 'cloud', 'dream', 'eagle', 'flame', 'grape', 'heart', 'ivory', 'jelly', 'kite', 'lemon', 'mouse', 'night', 'ocean', 'piano', 'queen', 'river', 'stone', 'tiger', 'unity', 'voice', 'whale', 'yacht', 'zebra', 'about', 'above', 'actor', 'admit', 'adopt', 'adult', 'after', 'again', 'agent', 'agree', 'ahead', 'alarm', 'album', 'alert', 'alien', 'align', 'alive', 'allow', 'alone', 'along', 'alter', 'among', 'anger', 'angle', 'angry', 'apart'];
         const hangmanParts = ['head', 'body', 'left-arm', 'right-arm', 'left-leg', 'right-leg'];
-        
+        let player1Name = 'Player 1';
+        let player2Name = 'Player 2';
+        let currentSetter = 1;
+        let currentGuesser = 2;
         let word = '';
         let guessedLetters = [];
         let wrongGuesses = [];
         let gameOver = false;
-        let won = false;
+
+        const startMatchBtn = document.getElementById('startMatchBtn');
+        const submitWordBtn = document.getElementById('submitWordBtn');
+        const nextRoundBtn = document.getElementById('nextRoundBtn');
+        const setup = document.getElementById('setup');
+        const wordInput = document.getElementById('wordInput');
+        const gameArea = document.getElementById('gameArea');
+        const setterInfo = document.getElementById('setterInfo');
+        const roleDisplay = document.getElementById('roleDisplay');
+        const wordDisplay = document.getElementById('word-display');
+        const messageDisplay = document.getElementById('message');
+        const wrongLettersDisplay = document.getElementById('wrong-letters');
+        const keyboard = document.getElementById('keyboard');
+        const setterWordInput = document.getElementById('setterWordInput');
+        const cells = document.querySelectorAll('.letter-btn');
+
+        startMatchBtn.addEventListener('click', startMatch);
+        submitWordBtn.addEventListener('click', submitWord);
+        nextRoundBtn.addEventListener('click', startNextRound);
+
+        function startMatch() {
+            player1Name = document.getElementById('player1Input').value.trim() || 'Player 1';
+            player2Name = document.getElementById('player2Input').value.trim() || 'Player 2';
+            currentSetter = 1;
+            currentGuesser = 2;
+            setup.style.display = 'none';
+            wordInput.style.display = 'block';
+            gameArea.style.display = 'none';
+            setterWordInput.value = '';
+            updateSetterInfo();
+            messageDisplay.textContent = 'Enter a secret 5-letter word for the other player to guess.';
+        }
+
+        function updateSetterInfo() {
+            const setterName = currentSetter === 1 ? player1Name : player2Name;
+            const guesserName = currentGuesser === 1 ? player1Name : player2Name;
+            setterInfo.textContent = `${setterName}, enter a 5-letter word for ${guesserName} to guess.`;
+            roleDisplay.textContent = `${guesserName} is guessing. ${setterName} is setting the word.`;
+        }
+
+        function submitWord() {
+            const entered = setterWordInput.value.trim().toLowerCase();
+            if (!/^[a-z]{5}$/.test(entered)) {
+                messageDisplay.textContent = 'Please enter exactly 5 letters.';
+                return;
+            }
+            word = entered;
+            wordInput.style.display = 'none';
+            gameArea.style.display = 'flex';
+            initGame();
+        }
 
         function initGame() {
-            word = words[Math.floor(Math.random() * words.length)];
             guessedLetters = [];
             wrongGuesses = [];
             gameOver = false;
-            won = false;
             displayWord();
             updateKeyboard();
             updateHangman();
             updateWrongGuesses();
-            document.getElementById('message').textContent = '';
+            messageDisplay.textContent = `${currentGuesser === 1 ? player1Name : player2Name} is guessing now.`;
+            nextRoundBtn.style.display = 'none';
         }
 
         function displayWord() {
             const display = word.split('').map(letter => 
                 guessedLetters.includes(letter) ? letter : '_'
             ).join(' ');
-            document.getElementById('word-display').textContent = display;
+            wordDisplay.textContent = display;
         }
 
         function guessLetter(letter) {
             if (guessedLetters.includes(letter) || gameOver) return;
-            
             guessedLetters.push(letter);
-            
             if (!word.includes(letter)) {
                 wrongGuesses.push(letter);
                 updateHangman();
             }
-
             displayWord();
             updateWrongGuesses();
             checkGameStatus();
         }
 
         function updateWrongGuesses() {
-            document.getElementById('wrong-letters').textContent = wrongGuesses.join(', ');
+            wrongLettersDisplay.textContent = wrongGuesses.join(', ');
         }
 
         function updateHangman() {
             hangmanParts.forEach((part, index) => {
                 const element = document.getElementById(part);
-                if (wrongGuesses.length > index) {
-                    element.style.display = 'block';
-                } else {
-                    element.style.display = 'none';
-                }
+                element.style.display = wrongGuesses.length > index ? 'block' : 'none';
             });
         }
 
         function checkGameStatus() {
             const isWon = word.split('').every(letter => guessedLetters.includes(letter));
-            
             if (isWon) {
-                document.getElementById('message').textContent = '🎉 You Won!';
+                messageDisplay.textContent = `🎉 ${currentGuesser === 1 ? player1Name : player2Name} wins!`;
                 gameOver = true;
-                won = true;
+                nextRoundBtn.style.display = 'inline-block';
             } else if (wrongGuesses.length >= 6) {
-                document.getElementById('message').textContent = '😢 Game Over!';
-                document.getElementById('word-display').textContent = word.split('').join(' ');
+                messageDisplay.textContent = `😢 Game Over! The word was ${word.toUpperCase()}`;
+                wordDisplay.textContent = word.split('').join(' ');
                 gameOver = true;
+                nextRoundBtn.style.display = 'inline-block';
             }
+            updateKeyboard();
         }
 
         function updateKeyboard() {
-            const keyboard = document.getElementById('keyboard');
             keyboard.innerHTML = '';
             for (let i = 97; i <= 122; i++) {
                 const letter = String.fromCharCode(i);
@@ -227,15 +310,20 @@
                 btn.disabled = guessedLetters.includes(letter) || gameOver;
                 btn.onclick = () => {
                     guessLetter(letter);
-                    updateKeyboard();
                 };
                 keyboard.appendChild(btn);
             }
         }
 
-        document.getElementById('reset-btn').addEventListener('click', initGame);
-
-        initGame();
+        function startNextRound() {
+            currentSetter = currentSetter === 1 ? 2 : 1;
+            currentGuesser = currentGuesser === 1 ? 2 : 1;
+            wordInput.style.display = 'block';
+            gameArea.style.display = 'none';
+            setterWordInput.value = '';
+            updateSetterInfo();
+            messageDisplay.textContent = `${currentSetter === 1 ? player1Name : player2Name} should enter a new 5-letter word.`;
+        }
     </script>
 </body>
 </html>
