@@ -194,7 +194,6 @@
                 <div class="cell" data-index="8"></div>
             </div>
             <div class="buttons">
-                <button id="reset">New Game</button>
             </div>
         </div>
         <div class="back-link">
@@ -220,7 +219,6 @@
         const winCounterO = document.getElementById('winCounterO');
         const player1Label = document.getElementById('player1Label');
         const player2Label = document.getElementById('player2Label');
-        const resetButton = document.getElementById('reset');
         const startGameBtn = document.getElementById('startGameBtn');
         const setup = document.getElementById('setup');
         const game = document.getElementById('game');
@@ -230,7 +228,6 @@
         const newMatchBtn = document.getElementById('newMatchBtn');
 
         startGameBtn.addEventListener('click', startGame);
-        resetButton.addEventListener('click', resetGame);
         newMatchBtn.addEventListener('click', startNewMatch);
 
         function startGame() {
@@ -273,14 +270,14 @@
                 setTimeout(() => {
                     winMessage.style.display = 'none';
                     resetGame();
-                }, 1000);
+                }, 500);
             } else if (board.every(cell => cell)) {
                 winMessage.textContent = 'Draw!';
                 winMessage.style.display = 'block';
                 setTimeout(() => {
                     winMessage.style.display = 'none';
                     resetGame();
-                }, 1000);
+                }, 500);
             } else {
                 currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
             }
