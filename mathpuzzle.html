@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Math Puzzle - Himalayan Adventure</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 100%;
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        .difficulty {
+            margin-bottom: 20px;
+        }
+        .difficulty button {
+            margin: 0 10px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .difficulty button:hover {
+            background: #764ba2;
+        }
+        .question {
+            font-size: 24px;
+            margin: 20px 0;
+        }
+        input[type="number"] {
+            padding: 10px;
+            font-size: 18px;
+            width: 100px;
+            text-align: center;
+        }
+        button {
+            margin: 10px;
+            padding: 10px 20px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #764ba2;
+        }
+        .result {
+            margin-top: 20px;
+            font-size: 18px;
+        }
+        .final-score {
+            font-size: 24px;
+            font-weight: bold;
+            color: #333;
+        }
+        .back-link {
+            margin-top: 20px;
+        }
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Math Puzzle</h1>
+        <div class="difficulty">
+            <button id="easy">Easy</button>
+            <button id="medium">Medium</button>
+            <button id="hard">Hard</button>
+        </div>
+        <div id="game-area" style="display: none;">
+            <div class="question" id="question"></div>
+            <input type="number" id="answer" placeholder="Your answer">
+            <br>
+            <button id="submit">Submit</button>
+            <div class="result" id="result"></div>
+            <div id="progress">Question 1 of 10</div>
+        </div>
+        <div id="final-result" style="display: none;">
+            <div class="final-score" id="final-score"></div>
+            <button id="play-again">Play Again</button>
+        </div>
+        <div class="back-link">
+            <a href="index.html">Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        let difficulty = '';
+        let currentQuestion = 0;
+        let correctAnswers = 0;
+        let questions = [];
+
+        function generateQuestion(level) {
+            let num1, num2, operator, answer;
+            switch (level) {
+                case 'easy':
+                    num1 = Math.floor(Math.random() * 10) + 1;
+                    num2 = Math.floor(Math.random() * 10) + 1;
+                    operator = Math.random() < 0.5 ? '+' : '-';
+                    if (operator === '-' && num1 < num2) [num1, num2] = [num2, num1];
+                    answer = operator === '+' ? num1 + num2 : num1 - num2;
+                    break;
+                case 'medium':
+                    num1 = Math.floor(Math.random() * 10) + 1;
+                    num2 = Math.floor(Math.random() * 10) + 1;
+                    operator = '*';
+                    answer = num1 * num2;
+                    break;
+                case 'hard':
+                    answer = Math.floor(Math.random() * 10) + 1;
+                    num2 = Math.floor(Math.random() * 10) + 1;
+                    num1 = answer * num2;
+                    operator = '/';
+                    break;
+            }
+            return { question: `${num1} ${operator} ${num2}`, answer: answer };
+        }
+
+        function startGame(level) {
+            difficulty = level;
+            currentQuestion = 0;
+            correctAnswers = 0;
+            questions = [];
+            for (let i = 0; i < 10; i++) {
+                questions.push(generateQuestion(level));
+            }
+            document.querySelector('.difficulty').style.display = 'none';
+            document.getElementById('game-area').style.display = 'block';
+            showQuestion();
+        }
+
+        function showQuestion() {
+            document.getElementById('question').textContent = `What is ${questions[currentQuestion].question}?`;
+            document.getElementById('answer').value = '';
+            document.getElementById('result').textContent = '';
+            document.getElementById('progress').textContent = `Question ${currentQuestion + 1} of 10`;
+        }
+
+        function checkAnswer() {
+            const userAnswer = parseInt(document.getElementById('answer').value);
+            const correctAnswer = questions[currentQuestion].answer;
+            if (userAnswer === correctAnswer) {
+                correctAnswers++;
+                document.getElementById('result').textContent = 'Correct!';
+                document.getElementById('result').style.color = 'green';
+            } else {
+                document.getElementById('result').textContent = `Wrong! The correct answer is ${correctAnswer}`;
+                document.getElementById('result').style.color = 'red';
+            }
+            currentQuestion++;
+            if (currentQuestion < 10) {
+                setTimeout(showQuestion, 2000);
+            } else {
+                setTimeout(showFinalResult, 2000);
+            }
+        }
+
+        function showFinalResult() {
+            document.getElementById('game-area').style.display = 'none';
+            document.getElementById('final-result').style.display = 'block';
+            document.getElementById('final-score').textContent = `You got ${correctAnswers} out of 10 correct!`;
+        }
+
+        function resetGame() {
+            document.getElementById('final-result').style.display = 'none';
+            document.querySelector('.difficulty').style.display = 'block';
+        }
+
+        document.getElementById('easy').addEventListener('click', () => startGame('easy'));
+        document.getElementById('medium').addEventListener('click', () => startGame('medium'));
+        document.getElementById('hard').addEventListener('click', () => startGame('hard'));
+        document.getElementById('submit').addEventListener('click', checkAnswer);
+        document.getElementById('play-again').addEventListener('click', resetGame);
+    </script>
+</body>
+</html>
