@@ -129,6 +129,36 @@
             z-index: 1000;
             display: none;
         }
+        .match-winner {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: linear-gradient(45deg, #ff6b6b, #ffa500);
+            color: white;
+            padding: 30px 50px;
+            border-radius: 15px;
+            font-size: 28px;
+            font-weight: bold;
+            box-shadow: 0 15px 40px rgba(0, 0, 0, 0.4);
+            z-index: 1001;
+            display: none;
+            text-align: center;
+        }
+        .match-winner button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            background: white;
+            color: #ff6b6b;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            font-weight: bold;
+        }
+        .match-winner button:hover {
+            background: #f0f0f0;
+        }
     </style>
 </head>
 <body>
@@ -171,6 +201,10 @@
             <a href="index.html">← Back to Home</a>
         </div>
         <div id="winMessage" class="win-message"></div>
+        <div id="matchWinner" class="match-winner">
+            <div id="matchWinnerText"></div>
+            <button id="newMatchBtn">Start New Match</button>
+        </div>
     </div>
 
     <script>
@@ -180,6 +214,7 @@
         let currentPlayer = 'X';
         let winsX = 0;
         let winsO = 0;
+        let gameActive = true;
         const cells = document.querySelectorAll('.cell');
         const winCounterX = document.getElementById('winCounterX');
         const winCounterO = document.getElementById('winCounterO');
@@ -190,9 +225,13 @@
         const setup = document.getElementById('setup');
         const game = document.getElementById('game');
         const winMessage = document.getElementById('winMessage');
+        const matchWinner = document.getElementById('matchWinner');
+        const matchWinnerText = document.getElementById('matchWinnerText');
+        const newMatchBtn = document.getElementById('newMatchBtn');
 
         startGameBtn.addEventListener('click', startGame);
         resetButton.addEventListener('click', resetGame);
+        newMatchBtn.addEventListener('click', startNewMatch);
 
         function startGame() {
             player1Name = document.getElementById('player1Input').value || 'Player 1';
@@ -205,6 +244,7 @@
         }
 
         function handleClick(e) {
+            if (!gameActive) return;
             const index = parseInt(e.target.dataset.index);
             if (board[index] || checkWinner(board, currentPlayer)) return;
             board[index] = currentPlayer;
@@ -217,13 +257,30 @@
                     winsO++;
                     winCounterO.textContent = winsO;
                 }
+                if (winsX >= 3) {
+                    matchWinnerText.textContent = `${player1Name} wins the match!`;
+                    matchWinner.style.display = 'block';
+                    gameActive = false;
+                    return;
+                } else if (winsO >= 3) {
+                    matchWinnerText.textContent = `${player2Name} wins the match!`;
+                    matchWinner.style.display = 'block';
+                    gameActive = false;
+                    return;
+                }
                 winMessage.textContent = `${currentPlayer === 'X' ? player1Name : player2Name} wins!`;
                 winMessage.style.display = 'block';
-                setTimeout(() => winMessage.style.display = 'none', 1500);
+                setTimeout(() => {
+                    winMessage.style.display = 'none';
+                    resetGame();
+                }, 1000);
             } else if (board.every(cell => cell)) {
                 winMessage.textContent = 'Draw!';
                 winMessage.style.display = 'block';
-                setTimeout(() => winMessage.style.display = 'none', 1500);
+                setTimeout(() => {
+                    winMessage.style.display = 'none';
+                    resetGame();
+                }, 1000);
             } else {
                 currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
             }
@@ -244,6 +301,16 @@
             board.fill(null);
             cells.forEach(cell => cell.textContent = '');
             currentPlayer = 'X';
+        }
+
+        function startNewMatch() {
+            winsX = 0;
+            winsO = 0;
+            winCounterX.textContent = '0';
+            winCounterO.textContent = '0';
+            matchWinner.style.display = 'none';
+            gameActive = true;
+            resetGame();
         }
     </script>
 </body>
