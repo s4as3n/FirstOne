@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic Tac Toe - Himalayan Adventure</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-image: url('https://images.unsplash.com/photo-1506905925346-21bda4d32df4?ixlib=rb-4.0.3&auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+        }
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        #board {
+            display: grid;
+            grid-template-columns: repeat(3, 80px);
+            grid-template-rows: repeat(3, 80px);
+            gap: 5px;
+            margin: 30px auto;
+        }
+        .cell {
+            width: 80px;
+            height: 80px;
+            background: white;
+            border: 2px solid #333;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 36px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .cell:hover {
+            background: #f0f0f0;
+        }
+        .scores {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            margin: 20px 0;
+            font-size: 18px;
+            font-weight: bold;
+        }
+        #winCounterX, #winCounterO {
+            min-width: 80px;
+        }
+        .buttons {
+            margin: 20px 0;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #764ba2;
+        }
+        .back-link {
+            margin-top: 20px;
+        }
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Tic Tac Toe</h1>
+        <div class="scores">
+            <div>
+                <div>X Wins</div>
+                <div id="winCounterX">0</div>
+            </div>
+            <div>
+                <div>O Wins</div>
+                <div id="winCounterO">0</div>
+            </div>
+        </div>
+        <div id="board">
+            <div class="cell" data-index="0"></div>
+            <div class="cell" data-index="1"></div>
+            <div class="cell" data-index="2"></div>
+            <div class="cell" data-index="3"></div>
+            <div class="cell" data-index="4"></div>
+            <div class="cell" data-index="5"></div>
+            <div class="cell" data-index="6"></div>
+            <div class="cell" data-index="7"></div>
+            <div class="cell" data-index="8"></div>
+        </div>
+        <div class="buttons">
+            <button id="reset">New Game</button>
+        </div>
+        <div class="back-link">
+            <a href="index.html">← Back to Home</a>
+        </div>
+    </div>
+
+    <script>
+        const board = Array(9).fill(null);
+        let currentPlayer = 'X';
+        let winsX = 0;
+        let winsO = 0;
+        const cells = document.querySelectorAll('.cell');
+        const winCounterX = document.getElementById('winCounterX');
+        const winCounterO = document.getElementById('winCounterO');
+        const resetButton = document.getElementById('reset');
+
+        cells.forEach(cell => cell.addEventListener('click', handleClick));
+        resetButton.addEventListener('click', resetGame);
+
+        function handleClick(e) {
+            const index = parseInt(e.target.dataset.index);
+            if (board[index] || checkWinner(board, currentPlayer)) return;
+            board[index] = currentPlayer;
+            e.target.textContent = currentPlayer;
+            if (checkWinner(board, currentPlayer)) {
+                if (currentPlayer === 'X') {
+                    winsX++;
+                    winCounterX.textContent = winsX;
+                } else {
+                    winsO++;
+                    winCounterO.textContent = winsO;
+                }
+                alert(`${currentPlayer} wins!`);
+            } else if (board.every(cell => cell)) {
+                alert('Draw!');
+            } else {
+                currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            }
+        }
+
+        function checkWinner(board, player) {
+            const winPatterns = [
+                [0,1,2],[3,4,5],[6,7,8],
+                [0,3,6],[1,4,7],[2,5,8],
+                [0,4,8],[2,4,6]
+            ];
+            return winPatterns.some(pattern => {
+                return pattern.every(index => board[index] === player);
+            });
+        }
+
+        function resetGame() {
+            board.fill(null);
+            cells.forEach(cell => cell.textContent = '');
+            currentPlayer = 'X';
+        }
+    </script>
+</body>
+</html>
