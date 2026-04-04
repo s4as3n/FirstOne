@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hangman Game - Himalayan Adventure</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        .game-content {
+            display: flex;
+            gap: 30px;
+            justify-content: center;
+        }
+        .hangman-drawing {
+            width: 150px;
+            height: 200px;
+        }
+        svg {
+            width: 100%;
+            height: 100%;
+        }
+        .game-info {
+            text-align: left;
+        }
+        #word-display {
+            font-size: 32px;
+            letter-spacing: 10px;
+            margin: 20px 0;
+            font-weight: bold;
+        }
+        #message {
+            font-size: 18px;
+            margin: 15px 0;
+            color: #666;
+        }
+        #guesses {
+            margin: 15px 0;
+            font-size: 14px;
+        }
+        #keyboard {
+            display: grid;
+            grid-template-columns: repeat(7, 40px);
+            gap: 5px;
+            margin: 20px 0;
+        }
+        .letter-btn {
+            padding: 8px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .letter-btn:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        #reset-btn {
+            padding: 10px 20px;
+            background: #764ba2;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+        #reset-btn:hover {
+            background: #5a3a7a;
+        }
+        .back-link {
+            margin-top: 20px;
+        }
+        .back-link a {
+            color: #667eea;
+            text-decoration: none;
+            font-size: 16px;
+        }
+        .back-link a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hangman Game</h1>
+        <div class="game-content">
+            <div class="hangman-drawing">
+                <svg id="hangman-svg" viewBox="0 0 200 250">
+                    <!-- Base -->
+                    <line x1="10" y1="230" x2="150" y2="230" stroke="black" stroke-width="4"/>
+                    <!-- Pole -->
+                    <line x1="50" y1="230" x2="50" y2="20" stroke="black" stroke-width="4"/>
+                    <!-- Top -->
+                    <line x1="50" y1="20" x2="130" y2="20" stroke="black" stroke-width="4"/>
+                    <!-- Rope -->
+                    <line x1="130" y1="20" x2="130" y2="50" stroke="black" stroke-width="2"/>
+                    <!-- Head -->
+                    <circle id="head" cx="130" cy="70" r="20" stroke="black" stroke-width="2" fill="none" style="display:none"/>
+                    <!-- Body -->
+                    <line id="body" x1="130" y1="90" x2="130" y2="150" stroke="black" stroke-width="2" style="display:none"/>
+                    <!-- Left Arm -->
+                    <line id="left-arm" x1="130" y1="110" x2="100" y2="130" stroke="black" stroke-width="2" style="display:none"/>
+                    <!-- Right Arm -->
+                    <line id="right-arm" x1="130" y1="110" x2="160" y2="130" stroke="black" stroke-width="2" style="display:none"/>
+                    <!-- Left Leg -->
+                    <line id="left-leg" x1="130" y1="150" x2="110" y2="190" stroke="black" stroke-width="2" style="display:none"/>
+                    <!-- Right Leg -->
+                    <line id="right-leg" x1="130" y1="150" x2="150" y2="190" stroke="black" stroke-width="2" style="display:none"/>
+                </svg>
+            </div>
+            <div class="game-info">
+                <div id="word-display"></div>
+                <div id="message"></div>
+                <div id="guesses"><strong>Wrong Guesses:</strong> <span id="wrong-letters"></span></div>
+                <div id="keyboard"></div>
+                <button id="reset-btn">New Game</button>
+                <div class="back-link">
+                    <a href="../index.html">← Back to Home</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const words = ['apple', 'beach', 'cloud', 'dream', 'eagle', 'flame', 'grape', 'heart', 'ivory', 'jelly', 'kite', 'lemon', 'mouse', 'night', 'ocean', 'piano', 'queen', 'river', 'stone', 'tiger', 'unity', 'voice', 'whale', 'yacht', 'zebra'];
+        const hangmanParts = ['head', 'body', 'left-arm', 'right-arm', 'left-leg', 'right-leg'];
+        
+        let word = '';
+        let guessedLetters = [];
+        let wrongGuesses = [];
+        let gameOver = false;
+        let won = false;
+
+        function initGame() {
+            word = words[Math.floor(Math.random() * words.length)];
+            guessedLetters = [];
+            wrongGuesses = [];
+            gameOver = false;
+            won = false;
+            displayWord();
+            updateKeyboard();
+            updateHangman();
+            document.getElementById('message').textContent = '';
+        }
+
+        function displayWord() {
+            const display = word.split('').map(letter => 
+                guessedLetters.includes(letter) ? letter : '_'
+            ).join(' ');
+            document.getElementById('word-display').textContent = display;
+        }
+
+        function guessLetter(letter) {
+            if (guessedLetters.includes(letter) || gameOver) return;
+            
+            guessedLetters.push(letter);
+            
+            if (!word.includes(letter)) {
+                wrongGuesses.push(letter);
+                updateHangman();
+            }
+
+            displayWord();
+            updateWrongGuesses();
+            checkGameStatus();
+        }
+
+        function updateWrongGuesses() {
+            document.getElementById('wrong-letters').textContent = wrongGuesses.join(', ');
+        }
+
+        function updateHangman() {
+            hangmanParts.forEach((part, index) => {
+                const element = document.getElementById(part);
+                if (wrongGuesses.length > index) {
+                    element.style.display = 'block';
+                } else {
+                    element.style.display = 'none';
+                }
+            });
+        }
+
+        function checkGameStatus() {
+            const isWon = word.split('').every(letter => guessedLetters.includes(letter));
+            
+            if (isWon) {
+                document.getElementById('message').textContent = '🎉 You Won!';
+                gameOver = true;
+                won = true;
+            } else if (wrongGuesses.length >= 6) {
+                document.getElementById('message').textContent = `😢 Game Over! Word was: ${word}`;
+                gameOver = true;
+            }
+        }
+
+        function updateKeyboard() {
+            const keyboard = document.getElementById('keyboard');
+            keyboard.innerHTML = '';
+            for (let i = 97; i <= 122; i++) {
+                const letter = String.fromCharCode(i);
+                const btn = document.createElement('button');
+                btn.textContent = letter;
+                btn.className = 'letter-btn';
+                btn.disabled = guessedLetters.includes(letter);
+                btn.onclick = () => {
+                    guessLetter(letter);
+                    updateKeyboard();
+                };
+                keyboard.appendChild(btn);
+            }
+        }
+
+        document.getElementById('reset-btn').addEventListener('click', initGame);
+
+        initGame();
+    </script>
+</body>
+</html>
