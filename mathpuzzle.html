@@ -29,6 +29,17 @@
             color: #333;
             margin-top: 0;
         }
+        .ai-option {
+            margin-bottom: 20px;
+            color: #333;
+        }
+        .ai-option label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .ai-option input[type="radio"] {
+            margin-right: 5px;
+        }
         .api-key {
             margin-bottom: 20px;
         }
@@ -105,7 +116,14 @@
 <body>
     <div class="container">
         <h1>Math Puzzle</h1>
-        <div class="api-key">
+        <div class="ai-option">
+            <label>Use AI-generated questions?</label>
+            <input type="radio" id="ai-yes" name="ai-option" value="yes" checked>
+            <label for="ai-yes">Yes</label>
+            <input type="radio" id="ai-no" name="ai-option" value="no">
+            <label for="ai-no">No</label>
+        </div>
+        <div class="api-key" id="api-key-section" style="display: block;">
             <label for="api-key">OpenAI API Key:</label>
             <input type="password" id="api-key" placeholder="Enter your OpenAI API Key">
         </div>
@@ -196,8 +214,9 @@
         }
 
         async function startGame(level) {
+            const useAI = document.querySelector('input[name="ai-option"]:checked').value === 'yes';
             const apiKey = document.getElementById('api-key').value;
-            if (!apiKey) {
+            if (useAI && !apiKey) {
                 alert('Please enter your OpenAI API Key');
                 return;
             }
@@ -205,11 +224,15 @@
             currentQuestion = 0;
             correctAnswers = 0;
             questions = [];
-            document.getElementById('result').textContent = 'Generating questions...';
+            document.getElementById('result').textContent = useAI ? 'Generating questions...' : 'Preparing questions...';
             document.querySelector('.difficulty').style.display = 'none';
             document.getElementById('api-key').disabled = true;
             for (let i = 0; i < 10; i++) {
-                questions.push(await generateQuestion(level, apiKey));
+                if (useAI) {
+                    questions.push(await generateQuestion(level, apiKey));
+                } else {
+                    questions.push(fallbackGenerateQuestion(level));
+                }
             }
             document.getElementById('result').textContent = '';
             document.getElementById('game-area').style.display = 'block';
@@ -253,6 +276,18 @@
             document.querySelector('.difficulty').style.display = 'block';
             document.getElementById('api-key').disabled = false;
         }
+
+        // Handle AI option change
+        document.querySelectorAll('input[name="ai-option"]').forEach(radio => {
+            radio.addEventListener('change', function() {
+                const apiKeySection = document.getElementById('api-key-section');
+                if (this.value === 'yes') {
+                    apiKeySection.style.display = 'block';
+                } else {
+                    apiKeySection.style.display = 'none';
+                }
+            });
+        });
 
         document.getElementById('easy').addEventListener('click', () => startGame('easy'));
         document.getElementById('medium').addEventListener('click', () => startGame('medium'));
