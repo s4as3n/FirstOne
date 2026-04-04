@@ -191,7 +191,7 @@
             const index = parseInt(e.target.dataset.index);
             if (board[index] || checkWinner(board, currentPlayer)) return;
             board[index] = currentPlayer;
-            e.target.textContent = currentPlayer === 'X' ? player1Name : player2Name;
+            e.target.textContent = currentPlayer;
             if (checkWinner(board, currentPlayer)) {
                 if (currentPlayer === 'X') {
                     winsX++;
